@@ -1,0 +1,12 @@
+{
+  "database_credentials": {
+    "dbname": "postgres",
+    "host": "localhost",
+    "password": "",
+    "user": "postgres"
+  },
+  "timezone": "Europe/Moscow",
+  "proxy_list": ["http://ih710639.vds.myihor.ru:34501", ""],
+  "API_request_interval": 60,
+  "url": "https://bittrex.com/api/v1.1/public/getmarketsummaries"
+}
