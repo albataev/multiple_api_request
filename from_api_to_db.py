@@ -40,9 +40,14 @@ VALUES (%(Ask)s, %(BaseVolume)s, %(Bid)s, \
 %(Volume)s, %(query_tstamp)s, %(user_id)s)' #database table and columns with corresponding
                                             # elements from JSON API response
 
-NEW_ITEMS = {'query_tstamp': datetime.fromtimestamp(time.time(), \
-                            pytz.timezone(TIMEZONE)).strftime("%Y-%m-%d %H:%M:%S.%f%z"),
+NEW_ITEMS = {'query_tstamp': '',
             'user_id': 'user1'} #new fields to be added to each json item during json processing
+
+
+def new_items(template):
+    template['query_tstamp'] = datetime.fromtimestamp(time.time(), \
+                            pytz.timezone(TIMEZONE)).strftime("%Y-%m-%d %H:%M:%S.%f%z")
+    return template
 
 
 def _main(Fetcher_class, api_url, time_interval, proxy_list, Resp_formatter, new_items):
@@ -59,7 +64,7 @@ def _main(Fetcher_class, api_url, time_interval, proxy_list, Resp_formatter, new
     while True:
         try:
             response = loop.run_until_complete(requesters_list[proxy_number].fetch())
-            formatted_response = resp_formatter.do(response, new_items, JSON_KEY)
+            formatted_response = resp_formatter.do(response, new_items(NEW_ITEMS), JSON_KEY)
             if formatted_response:
                 print('formatted_response received')
                 db_writer.prepare_request(SQL, formatted_response)
@@ -81,4 +86,5 @@ def _main(Fetcher_class, api_url, time_interval, proxy_list, Resp_formatter, new
 
 
 if __name__ == '__main__':
-    _main(request_api.Fetcher, URL, TIME_INTERVAL, PROXY_LIST, process_data.Format_resp, NEW_ITEMS)
+    _main(request_api.Fetcher, URL, TIME_INTERVAL, PROXY_LIST, process_data.Format_resp, new_items)
+    print('new items', NEW_ITEMS)
