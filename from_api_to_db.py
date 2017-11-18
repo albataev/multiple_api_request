@@ -1,5 +1,5 @@
-import process_data
-import request_api
+from modules_api import process_data_api
+from modules_api.request_api import Fetcher
 import aiohttp
 from datetime import datetime
 import pytz
@@ -24,9 +24,11 @@ def get_settings(fname = 'settings.json'):
         raise
     return settings
 
+
 settings = get_settings()
 TIMEZONE = settings['timezone']
 URL = settings['url']
+#URL = 'http://ya.ru'
 TIME_INTERVAL = settings['API_request_interval'] #60 interval between requests from the same IP
 PROXY_LIST = settings['proxy_list']
 JSON_KEY = 'result' #json item to be extracted from tje API response
@@ -58,7 +60,7 @@ def _main(Fetcher_class, api_url, time_interval, proxy_list, Resp_formatter, new
     proxy_number = 0
     calc_interval = time_interval / len(proxy_list)
     try:
-        db_writer = process_data.Db_writer(PG_PARAMS)
+        db_writer = process_data_api.Db_writer(PG_PARAMS)
     except Exception as error:
         print('exception while db_writer', error)
     while True:
@@ -86,5 +88,5 @@ def _main(Fetcher_class, api_url, time_interval, proxy_list, Resp_formatter, new
 
 
 if __name__ == '__main__':
-    _main(request_api.Fetcher, URL, TIME_INTERVAL, PROXY_LIST, process_data.Format_resp, new_items)
+    _main(Fetcher, URL, TIME_INTERVAL, PROXY_LIST, process_data_api.Format_resp, new_items)
     print('new items', NEW_ITEMS)

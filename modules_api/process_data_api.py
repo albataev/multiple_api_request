@@ -1,5 +1,6 @@
 import psycopg2
 import ujson
+import time
 
 
 class Format_resp():
@@ -49,22 +50,43 @@ class Db_writer(Writer):
         else:
             pass
 
+
+    def check_connection(self):
+        # проверить связь с БД, на случай закрытия соединения нужно переинициализировать
+        pg_write = None
+        while pg_write is None:
+            try:
+                self.cur.execute('SELECT 1;')
+                pg_write = 'ok'
+            except psycopg2.OperationalError as e:
+                print('Error during DB request, attempting to reconnect: ', e)
+                time.sleep(5)
+                self.connect()
+        return True
+
+
     def connect(self):
         if self.db_type == 'postgres':
-            try:
-                self.dbconn = psycopg2.connect(**self.connect_params)
-                self.cur = self.dbconn.cursor()
-                print('Connected to the PostgreSQL database')
-            except Exception as e:
-                print('Error connecting to DB: ', e)
+            connected = False
+            while connected == False:
+                try:
+                    self.dbconn = psycopg2.connect(**self.connect_params)
+                    self.cur = self.dbconn.cursor()
+                    print('Connected to the PostgreSQL database')
+                    connected = True
+                except Exception as e:
+                    print('Error in initialisation DB connection: ', e)
+                    print('Trying to reconnect')
+                    time.sleep(5)
 
 
     def prepare_request(self, sql_part, json):
-        if self.db_type == 'postgres':
-            for item in json:
-                self.cur.execute(sql_part, item)
-        else:
-            print('other DB adapter not implemented')
+        if self.check_connection():
+            if self.db_type == 'postgres':
+                for item in json:
+                    self.cur.execute(sql_part, item)
+            else:
+                print('other DB adapter not implemented')
 
     def commit(self):
         self.cur.execute('COMMIT;')
